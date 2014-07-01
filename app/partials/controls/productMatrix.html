@@ -1,0 +1,58 @@
+<div ng-repeat="group in comboVariants"  style="border: 1px solid black;">
+    <h3>{{group.DisplayName}}</h3>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>
+
+                </th>
+                <th ng-repeat="item in group">
+                    {{item.DisplayName[1]}}
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>
+                    {{'Quantity Available' | r}}
+                </td>
+                <td ng-repeat="item in group">
+                    {{item.QuantityAvailable}}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    {{'On Order' | r}}
+                </td>
+                <td ng-repeat="item in group">
+                    {{item.OrderQuantity}}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Price
+                </td>
+                <td ng-repeat="item in group">
+                    {{(product.StandardPriceSchedule.PriceBreaks[0].Price + item.Markup) | currency}}
+                </td>
+            </tr>
+            <tr>
+                <td>
+
+                </td>
+                <td ng-repeat="item in group">
+                    <div>
+                        <select id="451qa_input_qty" class="form-control" ng-change="qtyChanged()" ng-if="product.PriceSchedule.RestrictedQuantity" ng-model="item.Quantity" ng-options="pb.Quantity as getRestrictedQtyText(pb, product.QuantityMultiplier) for pb in product.PriceSchedule.PriceBreaks"><option value=""></option></select>
+                        <input id="451qa_input_qty" placeholder="0" autocomplete="off" class="form-control" ng-change="qtyChanged()" ng-if="!product.PriceSchedule.RestrictedQuantity" type="text" name="qtyInput" ng-model="item.Quantity"/>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<div class="alert alert-danger" style="margin-top:20px;" ng-show="qtyError" ng-bind-html="qtyError"></div>
+<button class="btn btn-success btn-block btn-lg" type="button" id="451_btn_orderadd" ng-disabled="qtyError" ng-click="addVariantsToOrder()">
+    <loadingindicator ng-show="addToOrderIndicator" />
+    <i ng-show="lineItemErrors.length > 0" class="fa fa-warning"></i>
+    {{addToOrderText | r}}
+</button>
