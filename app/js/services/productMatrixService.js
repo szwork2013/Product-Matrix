@@ -4,10 +4,6 @@ four51.app.factory('ProductMatrix', ['$resource', '$451', 'Variant', function($r
             fn(data, count);
     }
 
-    function _extend(product) {
-
-    }
-
     var _build = function(product, order, success) {
         var specCombos = {};
         angular.forEach(product.Specs, function(spec) {
@@ -81,9 +77,62 @@ four51.app.factory('ProductMatrix', ['$resource', '$451', 'Variant', function($r
         }
     }
 
+    var _validateQty = function(matrix, product, success) {
+        var qtyError = "";
+        var priceSchedule = product.StandardPriceSchedule;
+        angular.forEach(matrix, function(group) {
+            angular.forEach(group, function(variant) {
+                var qty = variant.Quantity;
+                if (variant.Quantity) {
+                    if(!$451.isPositiveInteger(qty))
+                    {
+                        qtyError += "<p>Please select a valid quantity for " + variant.DisplayName[0] + " " + variant.DisplayName[1] + "</p>";
+                    }
+                }
+                if(priceSchedule.MinQuantity > qty && qty != 0){
+                    qtyError += "<p>Quantity must be equal or greater than " + priceSchedule.MinQuantity + " for " + variant.DisplayName[0] + " " + variant.DisplayName[1] + "</p>";
+                }
+                if(priceSchedule.MaxQuantity && priceSchedule.MaxQuantity < qty){
+                    qtyError += "<p>Quantity must be equal or less than " + priceSchedule.MaxQuantity + " for " + variant.DisplayName[0] + " " + variant.DisplayName[1] + "</p>";
+                }
+                var qtyAvail = variant.QuantityAvailable;
+                if(qtyAvail < qty && product.AllowExceedInventory == false){
+                    qtyError = "<p>Quantity cannot exceed the Quantity Available of " +  qtyAvail + " for " + variant.DisplayName[0] + " " + variant.DisplayName[1] + "</p>";;
+                }
+            });
+        });
+
+        _then(success, qtyError);
+    }
+
+    var _addToOrder = function(matrix, product, success) {
+        var lineItems = [];
+        angular.forEach(matrix, function(group) {
+            angular.forEach(group, function(item) {
+                if (item.Quantity > 0) {
+                    var liSpecs = {};
+                    for (var spec in product.Specs) {
+                        liSpecs[spec] = angular.copy(product.Specs[spec]);
+                        liSpecs[spec].Value = item.tempSpecs[spec].Value;
+                    }
+                    var li = {
+                        "PriceSchedule":product.StandardPriceSchedule,
+                        "Product":product,
+                        "Quantity":item.Quantity,
+                        "Specs":liSpecs,
+                        "Variant":item,
+                        "qtyError":null
+                    }
+                    lineItems.push(li);
+                }
+            });
+        });
+        _then(success, lineItems);
+    }
+
     return {
-        /*get: _get,
-        search: _search*/
-        build: _build
+        build: _build,
+        validateQuantity: _validateQty,
+        addToOrder: _addToOrder
     }
 }]);
