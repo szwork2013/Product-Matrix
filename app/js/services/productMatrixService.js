@@ -1,30 +1,57 @@
 four51.app.factory('ProductMatrix', ['$resource', '$451', 'Variant', function($resource, $451, Variant) {
-    function _then(fn, data, count) {
+    function _then(fn, data, count, s1, s2) {
         if (angular.isFunction(fn))
-            fn(data, count);
+            fn(data, count, s1, s2);
     }
 
     var _build = function(product, order, success) {
         var specCombos = {};
+        var defineVariantSpecs = {};
+        var defineVariantSpecCount = 0;
+        var spec1Name = "";
+        var spec2Name = "";
         angular.forEach(product.Specs, function(spec) {
-            if (spec.ListOrder == 1) {
-                angular.forEach(product.Specs, function(s) {
-                    if (s.ListOrder == 2) {
-                        angular.forEach(spec.Options, function(option) {
-                            specCombos[option.Value] = [];
-                            angular.forEach(s.Options, function(o) {
-                                var combo = [option.ID, o.ID];
-                                combo.Markup = option.Markup + o.Markup;
-                                combo.Specs = {};
-                                combo.Specs[spec.Name] = spec;
-                                combo.Specs[s.Name] = s;
-                                specCombos[option.Value].push(combo);
-                            });
-                        });
-                    }
-                });
+            if (spec.DefinesVariant) {
+                defineVariantSpecCount++;
+                defineVariantSpecs[spec.Name] = spec;
             }
         });
+        if (defineVariantSpecCount == 1) {
+            angular.forEach(defineVariantSpecs, function(spec) {
+                spec1Name = spec.Name;
+                angular.forEach(spec.Options, function(option) {
+                    specCombos[option.Value] = [];
+                    var combo = [option.ID];
+                    combo.Markup = option.Markup;
+                    combo.Specs = {};
+                    combo.Specs[spec.Name] = spec;
+                    specCombos[option.Value].push(combo);
+                });
+            });
+        }
+        else if (defineVariantSpecCount == 2) {
+            angular.forEach(defineVariantSpecs, function(spec) {
+                if (spec.ListOrder == 1) {
+                    spec1Name = spec.Name;
+                    angular.forEach(product.Specs, function(s) {
+                        if (s.ListOrder == 2) {
+                            spec2Name = s.Name;
+                            angular.forEach(spec.Options, function(option) {
+                                specCombos[option.Value] = [];
+                                angular.forEach(s.Options, function(o) {
+                                    var combo = [option.ID, o.ID];
+                                    combo.Markup = option.Markup + o.Markup;
+                                    combo.Specs = {};
+                                    combo.Specs[spec.Name] = spec;
+                                    combo.Specs[s.Name] = s;
+                                    specCombos[option.Value].push(combo);
+                                });
+                            });
+                        }
+                    });
+                }
+            });
+        }
 
         var comboVariants = {};
         var comboCount = 0;
@@ -32,6 +59,7 @@ four51.app.factory('ProductMatrix', ['$resource', '$451', 'Variant', function($r
         for (var option in specCombos) {
             comboVariants[option] = [];
             angular.forEach(specCombos[option], function(combo) {
+                combo.ListOrder = comboCount;
                 comboCount++;
                 getVariantData(product, combo, option);
             });
@@ -52,6 +80,7 @@ four51.app.factory('ProductMatrix', ['$resource', '$451', 'Variant', function($r
                 variant.DisplayName = [];
                 variant.Markup = params.Markup;
                 variant.tempSpecs = {};
+                variant.ListOrder = params.ListOrder;
                 angular.forEach(product.Specs, function(spec) {
                     angular.forEach(spec.Options, function(option) {
                         if (option.ID == params[0]) {
@@ -69,9 +98,20 @@ four51.app.factory('ProductMatrix', ['$resource', '$451', 'Variant', function($r
                 variant.OrderQuantity = order ? countVariantInOrder(variant) : 0;
                 comboVariants[group].DisplayName = group;
                 variantCount++;
+                if (defineVariantSpecCount == 1) {
+                    comboVariants[group].QuantityAvailable = variant.QuantityAvailable;
+                    comboVariants[group].OrderQuantity = variant.OrderQuantity;
+                    comboVariants[group].ListOrder = variant.ListOrder;
+                }
                 comboVariants[group].push(variant);
                 if (variantCount == comboCount) {
-                    _then(success, comboVariants);
+                    if (defineVariantSpecCount == 1) {
+                        //
+                    }
+                    else if (defineVariantSpecCount == 2) {
+                        //
+                    }
+                    _then(success, comboVariants, defineVariantSpecCount, spec1Name, spec2Name);
                 }
             });
         }
@@ -86,18 +126,18 @@ four51.app.factory('ProductMatrix', ['$resource', '$451', 'Variant', function($r
                 if (variant.Quantity) {
                     if(!$451.isPositiveInteger(qty))
                     {
-                        qtyError += "<p>Please select a valid quantity for " + variant.DisplayName[0] + " " + variant.DisplayName[1] + "</p>";
+                        qtyError += "<p>Please select a valid quantity for " + variant.DisplayName[0] + " " + (variant.DisplayName[1] ? variant.DisplayName[1] : "") + "</p>";
                     }
                 }
                 if(priceSchedule.MinQuantity > qty && qty != 0){
-                    qtyError += "<p>Quantity must be equal or greater than " + priceSchedule.MinQuantity + " for " + variant.DisplayName[0] + " " + variant.DisplayName[1] + "</p>";
+                    qtyError += "<p>Quantity must be equal or greater than " + priceSchedule.MinQuantity + " for " + variant.DisplayName[0] + " " + (variant.DisplayName[1] ? variant.DisplayName[1] : "") + "</p>";
                 }
                 if(priceSchedule.MaxQuantity && priceSchedule.MaxQuantity < qty){
-                    qtyError += "<p>Quantity must be equal or less than " + priceSchedule.MaxQuantity + " for " + variant.DisplayName[0] + " " + variant.DisplayName[1] + "</p>";
+                    qtyError += "<p>Quantity must be equal or less than " + priceSchedule.MaxQuantity + " for " + variant.DisplayName[0] + " " + (variant.DisplayName[1] ? variant.DisplayName[1] : "") + "</p>";
                 }
                 var qtyAvail = variant.QuantityAvailable;
                 if(qtyAvail < qty && product.AllowExceedInventory == false){
-                    qtyError = "<p>Quantity cannot exceed the Quantity Available of " +  qtyAvail + " for " + variant.DisplayName[0] + " " + variant.DisplayName[1] + "</p>";;
+                    qtyError = "<p>Quantity cannot exceed the Quantity Available of " +  qtyAvail + " for " + variant.DisplayName[0] + " " + (variant.DisplayName[1] ? variant.DisplayName[1] : "") + "</p>";;
                 }
             });
         });

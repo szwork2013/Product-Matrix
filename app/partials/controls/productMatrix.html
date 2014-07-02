@@ -1,4 +1,4 @@
-<div ng-repeat="group in comboVariants"  style="border: 1px solid black;">
+<div ng-repeat="group in comboVariants"  style="border: 1px solid black;" ng-show="groupCount == 2">
     <h3>{{group.DisplayName}}</h3>
     <table class="table">
         <thead>
@@ -6,7 +6,7 @@
                 <th>
 
                 </th>
-                <th ng-repeat="item in group">
+                <th ng-repeat="item in group | orderobjectby:'ListOrder':false">
                     {{item.DisplayName[1]}}
                 </th>
             </tr>
@@ -16,7 +16,7 @@
                 <td>
                     {{'Quantity Available' | r}}
                 </td>
-                <td ng-repeat="item in group">
+                <td ng-repeat="item in group | orderobjectby:'ListOrder':false">
                     {{item.QuantityAvailable}}
                 </td>
             </tr>
@@ -24,7 +24,7 @@
                 <td>
                     {{'On Order' | r}}
                 </td>
-                <td ng-repeat="item in group">
+                <td ng-repeat="item in group | orderobjectby:'ListOrder':false">
                     {{item.OrderQuantity}}
                 </td>
             </tr>
@@ -32,7 +32,7 @@
                 <td>
                     Price
                 </td>
-                <td ng-repeat="item in group">
+                <td ng-repeat="item in group | orderobjectby:'ListOrder':false">
                     {{(product.StandardPriceSchedule.PriceBreaks[0].Price + item.Markup) | currency}}
                 </td>
             </tr>
@@ -40,10 +40,62 @@
                 <td>
 
                 </td>
-                <td ng-repeat="item in group">
+                <td ng-repeat="item in group | orderobjectby:'ListOrder':false">
                     <div>
                         <select id="451qa_input_qty" class="form-control" ng-change="qtyChanged()" ng-if="product.PriceSchedule.RestrictedQuantity" ng-model="item.Quantity" ng-options="pb.Quantity as getRestrictedQtyText(pb, product.QuantityMultiplier) for pb in product.PriceSchedule.PriceBreaks"><option value=""></option></select>
                         <input id="451qa_input_qty" placeholder="0" autocomplete="off" class="form-control" ng-change="qtyChanged()" ng-if="!product.PriceSchedule.RestrictedQuantity" type="text" name="qtyInput" ng-model="item.Quantity"/>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<div ng-show="groupCount == 1" style="border: 1px solid black;">
+    <h3>{{spec1Name}}</h3>
+    <table class="table">
+        <thead>
+        <tr>
+            <th>
+
+            </th>
+            <th ng-repeat="group in comboVariants | orderobjectby:'ListOrder':false">
+                {{group.DisplayName}}
+            </th>
+        </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>
+                    {{'Quantity Available' | r}}
+                </td>
+                <td ng-repeat="group in comboVariants | orderobjectby:'ListOrder':false">
+                    {{group.QuantityAvailable}}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    {{'On Order' | r}}
+                </td>
+                <td ng-repeat="group in comboVariants | orderobjectby:'ListOrder':false">
+                    {{group.OrderQuantity}}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Price
+                </td>
+                <td ng-repeat="group in comboVariants | orderobjectby:'ListOrder':false">
+                    {{(product.StandardPriceSchedule.PriceBreaks[0].Price + item.Markup) | currency}}
+                </td>
+            </tr>
+            <tr>
+                <td>
+
+                </td>
+                <td ng-repeat="group in comboVariants | orderobjectby:'ListOrder':false">
+                    <div>
+                        <select id="451qa_input_qty" class="form-control" ng-change="qtyChanged()" ng-if="product.PriceSchedule.RestrictedQuantity" ng-model="group[0].Quantity" ng-options="pb.Quantity as getRestrictedQtyText(pb, product.QuantityMultiplier) for pb in product.PriceSchedule.PriceBreaks"><option value=""></option></select>
+                        <input id="451qa_input_qty" placeholder="0" autocomplete="off" class="form-control" ng-change="qtyChanged()" ng-if="!product.PriceSchedule.RestrictedQuantity" type="text" name="qtyInput" ng-model="group[0].Quantity"/>
                     </div>
                 </td>
             </tr>

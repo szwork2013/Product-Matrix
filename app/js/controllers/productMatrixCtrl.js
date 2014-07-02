@@ -8,7 +8,10 @@ four51.app.controller('ProductMatrixCtrl', ['$scope', '$routeParams', '$route', 
             ProductDisplayService.getProductAndVariant($routeParams.productInteropID, $routeParams.variantInteropID, function (data) {
                 $scope.product = data.product;
                 if ($scope.product.IsVBOSS) {
-                    ProductMatrix.build($scope.product, $scope.currentOrder, function(matrix) {
+                    ProductMatrix.build($scope.product, $scope.currentOrder, function(matrix, specCount, spec1Name, spec2Name) {
+                        $scope.groupCount = specCount;
+                        $scope.spec1Name = spec1Name;
+                        $scope.spec2Name = spec2Name;
                         $scope.comboVariants = matrix;
                     });
                 }
